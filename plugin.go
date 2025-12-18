@@ -19,7 +19,24 @@ import (
 )
 
 // LaunchNotes GraphQL API endpoint.
-const launchNotesGraphQLEndpoint = "https://app.launchnotes.io/graphql"
+var launchNotesGraphQLEndpoint = "https://app.launchnotes.io/graphql"
+
+// httpClient is the HTTP client used for requests.
+// Can be overridden in tests.
+var httpClient HTTPClient = nil
+
+// HTTPClient interface for HTTP operations (allows mocking in tests).
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// getHTTPClient returns the HTTP client to use for requests.
+func getHTTPClient() HTTPClient {
+	if httpClient != nil {
+		return httpClient
+	}
+	return defaultHTTPClient
+}
 
 // Shared HTTP client for connection reuse across requests.
 // Includes security hardening: TLS 1.3+, redirect protection.
@@ -368,7 +385,7 @@ func (p *LaunchNotesPlugin) executeGraphQL(ctx context.Context, token, query str
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := defaultHTTPClient.Do(req)
+	resp, err := getHTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
