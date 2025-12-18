@@ -81,8 +81,8 @@ func TestValidate(t *testing.T) {
 			expectErrors: nil,
 		},
 		{
-			name:   "missing api_token and project_id",
-			config: map[string]any{},
+			name:        "missing api_token and project_id",
+			config:      map[string]any{},
 			expectValid: false,
 			expectErrors: []string{
 				"api_token",
@@ -392,8 +392,8 @@ func TestExecute(t *testing.T) {
 		expectOutputs  map[string]any
 	}{
 		{
-			name:   "PostPublish hook in dry run mode",
-			hook:   plugin.HookPostPublish,
+			name: "PostPublish hook in dry run mode",
+			hook: plugin.HookPostPublish,
 			config: map[string]any{
 				"api_token":      "test-token",
 				"project_id":     "test-project",
@@ -413,8 +413,8 @@ func TestExecute(t *testing.T) {
 			},
 		},
 		{
-			name:   "OnSuccess hook in dry run mode",
-			hook:   plugin.HookOnSuccess,
+			name: "OnSuccess hook in dry run mode",
+			hook: plugin.HookOnSuccess,
 			config: map[string]any{
 				"api_token":      "test-token",
 				"project_id":     "test-project",
@@ -435,8 +435,8 @@ func TestExecute(t *testing.T) {
 			},
 		},
 		{
-			name:   "unhandled hook returns success",
-			hook:   plugin.HookPrePlan,
+			name: "unhandled hook returns success",
+			hook: plugin.HookPrePlan,
 			config: map[string]any{
 				"api_token":  "test-token",
 				"project_id": "test-project",
@@ -450,8 +450,8 @@ func TestExecute(t *testing.T) {
 			expectOutputs: nil,
 		},
 		{
-			name:   "custom title template with version substitution",
-			hook:   plugin.HookPostPublish,
+			name: "custom title template with version substitution",
+			hook: plugin.HookPostPublish,
 			config: map[string]any{
 				"api_token":      "test-token",
 				"project_id":     "my-proj",

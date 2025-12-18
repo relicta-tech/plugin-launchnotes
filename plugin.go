@@ -50,7 +50,9 @@ var defaultHTTPClient = &http.Client{
 			return fmt.Errorf("redirect to non-HTTPS URL not allowed")
 		}
 		// Only allow redirects within launchnotes.io domain
-		if !strings.HasSuffix(req.URL.Host, "launchnotes.io") {
+		// Must be exact match or subdomain (not evil-launchnotes.io)
+		host := req.URL.Host
+		if host != "launchnotes.io" && !strings.HasSuffix(host, ".launchnotes.io") {
 			return fmt.Errorf("redirect away from launchnotes.io not allowed")
 		}
 		return nil
@@ -203,22 +205,23 @@ func (p *LaunchNotesPlugin) createAnnouncement(ctx context.Context, cfg *Config,
 		content.WriteString(html.EscapeString(releaseCtx.Changelog))
 	} else if releaseCtx.Changes != nil {
 		// Build content from changes
+		// Escape HTML in descriptions to prevent XSS attacks
 		if len(releaseCtx.Changes.Breaking) > 0 {
 			content.WriteString("\n## Breaking Changes\n")
 			for _, c := range releaseCtx.Changes.Breaking {
-				content.WriteString(fmt.Sprintf("- %s\n", c.Description))
+				content.WriteString(fmt.Sprintf("- %s\n", html.EscapeString(c.Description)))
 			}
 		}
 		if len(releaseCtx.Changes.Features) > 0 {
 			content.WriteString("\n## New Features\n")
 			for _, c := range releaseCtx.Changes.Features {
-				content.WriteString(fmt.Sprintf("- %s\n", c.Description))
+				content.WriteString(fmt.Sprintf("- %s\n", html.EscapeString(c.Description)))
 			}
 		}
 		if len(releaseCtx.Changes.Fixes) > 0 {
 			content.WriteString("\n## Bug Fixes\n")
 			for _, c := range releaseCtx.Changes.Fixes {
-				content.WriteString(fmt.Sprintf("- %s\n", c.Description))
+				content.WriteString(fmt.Sprintf("- %s\n", html.EscapeString(c.Description)))
 			}
 		}
 	}
