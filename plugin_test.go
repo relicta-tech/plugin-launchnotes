@@ -146,21 +146,21 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up environment variables
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
+				_ = os.Setenv(k, v)
 			}
 			// Clean up environment variables after test
 			defer func() {
 				for k := range tt.envVars {
-					os.Unsetenv(k)
+					_ = os.Unsetenv(k)
 				}
 			}()
 
 			// Also unset env vars if not in the test case
 			if _, ok := tt.envVars["LAUNCHNOTES_API_TOKEN"]; !ok {
-				os.Unsetenv("LAUNCHNOTES_API_TOKEN")
+				_ = os.Unsetenv("LAUNCHNOTES_API_TOKEN")
 			}
 			if _, ok := tt.envVars["LAUNCHNOTES_PROJECT_ID"]; !ok {
-				os.Unsetenv("LAUNCHNOTES_PROJECT_ID")
+				_ = os.Unsetenv("LAUNCHNOTES_PROJECT_ID")
 			}
 
 			p := &LaunchNotesPlugin{}
@@ -318,15 +318,15 @@ func TestParseConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear and set environment variables
-			os.Unsetenv("LAUNCHNOTES_API_TOKEN")
-			os.Unsetenv("LAUNCHNOTES_PROJECT_ID")
+			_ = os.Unsetenv("LAUNCHNOTES_API_TOKEN")
+			_ = os.Unsetenv("LAUNCHNOTES_PROJECT_ID")
 
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
+				_ = os.Setenv(k, v)
 			}
 			defer func() {
 				for k := range tt.envVars {
-					os.Unsetenv(k)
+					_ = os.Unsetenv(k)
 				}
 			}()
 
@@ -742,12 +742,12 @@ func TestCreateAnnouncementWithMockServer(t *testing.T) {
 				// Parse the request to check if it's a publish or create
 				body, _ := io.ReadAll(r.Body)
 				var req GraphQLRequest
-				json.Unmarshal(body, &req)
+				_ = json.Unmarshal(body, &req)
 
 				if strings.Contains(req.Query, "publishAnnouncement") {
 					publishCalled = true
 					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(`{
+					_, _ = w.Write([]byte(`{
 						"data": {
 							"publishAnnouncement": {
 								"announcement": {
@@ -763,7 +763,7 @@ func TestCreateAnnouncementWithMockServer(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.serverStatus)
-				w.Write([]byte(tt.serverResponse))
+				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
 
@@ -974,7 +974,7 @@ func (p *testPlugin) executeGraphQLWithTestServer(ctx context.Context, token, qu
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -1549,7 +1549,7 @@ func TestExecuteCreateAnnouncementWithMockedClient(t *testing.T) {
 				// Verify request body contains expected fields
 				body, _ := io.ReadAll(req.Body)
 				var gqlReq GraphQLRequest
-				json.Unmarshal(body, &gqlReq)
+				_ = json.Unmarshal(body, &gqlReq)
 
 				if !strings.Contains(gqlReq.Query, "createAnnouncement") {
 					t.Errorf("Expected createAnnouncement mutation, got %q", gqlReq.Query)
@@ -1663,7 +1663,7 @@ func TestExecutePublishAnnouncementWithMockedClient(t *testing.T) {
 				// Verify request body contains correct fields
 				body, _ := io.ReadAll(req.Body)
 				var gqlReq GraphQLRequest
-				json.Unmarshal(body, &gqlReq)
+				_ = json.Unmarshal(body, &gqlReq)
 
 				if !strings.Contains(gqlReq.Query, "publishAnnouncement") {
 					t.Errorf("Expected publishAnnouncement mutation, got %q", gqlReq.Query)
@@ -1776,7 +1776,7 @@ func TestExecuteGraphQL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.serverStatus)
-				w.Write([]byte(tt.serverResponse))
+				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
 
@@ -1792,7 +1792,7 @@ func TestExecuteGraphQL(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to make request: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != tt.serverStatus {
 				t.Errorf("Expected status %d, got %d", tt.serverStatus, resp.StatusCode)
@@ -2040,12 +2040,12 @@ func TestPublishFailure(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		var req GraphQLRequest
-		json.Unmarshal(body, &req)
+		_ = json.Unmarshal(body, &req)
 
 		if strings.Contains(req.Query, "publishAnnouncement") {
 			publishAttempted = true
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"data": {
 					"publishAnnouncement": {
 						"announcement": null,
@@ -2058,7 +2058,7 @@ func TestPublishFailure(t *testing.T) {
 
 		// Create succeeds
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"data": {
 				"createAnnouncement": {
 					"announcement": {
@@ -2121,14 +2121,14 @@ func TestAutoPublishDisabled(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		var req GraphQLRequest
-		json.Unmarshal(body, &req)
+		_ = json.Unmarshal(body, &req)
 
 		if strings.Contains(req.Query, "publishAnnouncement") {
 			publishCalled = true
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"data": {
 				"createAnnouncement": {
 					"announcement": {
@@ -2187,14 +2187,14 @@ func TestCategoriesAndChangeTypes(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		var req GraphQLRequest
-		json.Unmarshal(body, &req)
+		_ = json.Unmarshal(body, &req)
 
 		if strings.Contains(req.Query, "createAnnouncement") {
 			receivedVariables = req.Variables
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"data": {
 				"createAnnouncement": {
 					"announcement": {
@@ -2330,14 +2330,14 @@ func (p *testPluginWithCategories) createAnnouncementWithCategories(ctx context.
 	if err != nil {
 		return &plugin.ExecuteResponse{Success: false, Error: err.Error()}, nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, _ := io.ReadAll(resp.Body)
 	var graphQLResp GraphQLResponse
-	json.Unmarshal(body, &graphQLResp)
+	_ = json.Unmarshal(body, &graphQLResp)
 
 	var result CreateAnnouncementResponse
-	json.Unmarshal(graphQLResp.Data, &result)
+	_ = json.Unmarshal(graphQLResp.Data, &result)
 
 	return &plugin.ExecuteResponse{
 		Success: true,
@@ -2356,7 +2356,7 @@ func TestNotifySubscribersOption(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		var req GraphQLRequest
-		json.Unmarshal(body, &req)
+		_ = json.Unmarshal(body, &req)
 
 		if strings.Contains(req.Query, "publishAnnouncement") {
 			input := req.Variables["input"].(map[string]any)
@@ -2365,7 +2365,7 @@ func TestNotifySubscribersOption(t *testing.T) {
 
 		if strings.Contains(req.Query, "createAnnouncement") {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"data": {
 					"createAnnouncement": {
 						"announcement": {"id": "ann-123", "title": "Test", "state": "draft"},
@@ -2377,7 +2377,7 @@ func TestNotifySubscribersOption(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"data": {
 				"publishAnnouncement": {
 					"announcement": {"id": "ann-123", "state": "published", "publishedAt": "2024-01-15T10:00:00Z"},
